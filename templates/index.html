@@ -291,17 +291,16 @@
         }
         
         function initializeCustomerSelect() {
-            const options = [
-                {
-                    label: '-- เลือกลูกค้าที่บันทึกไว้ --',
-                    value: ''
-                },
-                ...customers.map((customer, index) => ({
-                    label: customer.name,
-                    value: index.toString(),
-                    description: customer.address
-                }))
-            ];
+            if (customers.length === 0) {
+                // No customers, just hide or disable the select
+                return;
+            }
+            
+            const options = customers.map((customer, index) => ({
+                label: customer.name,
+                value: index.toString(),
+                description: customer.address
+            }));
             
             VirtualSelect.init({
                 ele: '#customerSelect',
@@ -311,19 +310,25 @@
                 searchPlaceholderText: 'ค้นหาลูกค้า...',
                 noOptionsText: 'ไม่พบข้อมูลลูกค้า',
                 noSearchResultsText: 'ไม่พบผลลัพธ์',
-                maxWidth: '100%'
+                maxWidth: '100%',
+                hasOptionDescription: true
             });
             
             // Handle customer selection
-            document.querySelector('#customerSelect').addEventListener('change', function() {
-                const selectedIndex = this.value;
-                if (selectedIndex !== '') {
-                    const customer = customers[parseInt(selectedIndex)];
-                    $('#customerName').val(customer.name);
-                    $('#customerAddress').val(customer.address);
-                    $('#customerTaxId').val(customer.tax_id);
-                }
-            });
+            const customerSelectElement = document.querySelector('#customerSelect');
+            if (customerSelectElement) {
+                customerSelectElement.addEventListener('change', function() {
+                    const selectedIndex = this.value;
+                    if (selectedIndex !== '' && selectedIndex !== null && selectedIndex !== undefined) {
+                        const customer = customers[parseInt(selectedIndex)];
+                        if (customer) {
+                            $('#customerName').val(customer.name);
+                            $('#customerAddress').val(customer.address);
+                            $('#customerTaxId').val(customer.tax_id || '');
+                        }
+                    }
+                });
+            }
         }
         
         function addItem() {

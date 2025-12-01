@@ -200,6 +200,7 @@
             </div>
         </div>
         
+        {% if customer and customer.name %}
         <div class="customer-info">
             <h3 style="margin-bottom: 10px; color: #333;">ข้อมูลผู้ซื้อ</h3>
             <div class="customer-details">
@@ -216,6 +217,7 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
         
         <table class="items-table">
             <thead>
