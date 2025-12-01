@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสร้างใบเสร็จรับเงิน</title>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- VirtualSelect CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.40/dist/virtual-select.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.40/dist/virtual-select.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .form-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .items-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .items-table th {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .items-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .total-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+        
+        #itemSelect {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ระบบสร้างใบเสร็จรับเงิน</h1>
+        
+        <div class="form-section">
+            <div class="form-group">
+                <label for="itemSelect">เลือกสินค้า (SKU / ชื่อสินค้า)</label>
+                <div id="itemSelect"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantity">จำนวน</label>
+                <input type="number" id="quantity" min="1" value="1" placeholder="กรอกจำนวน">
+            </div>
+            
+            <button class="btn btn-primary" onclick="addItem()">เพิ่มสินค้า</button>
+        </div>
+        
+        <div id="itemsList">
+            <h2 style="margin-bottom: 15px;">รายการสินค้า</h2>
+            <table class="items-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>ชื่อสินค้า</th>
+                        <th class="text-right">ราคา/หน่วย</th>
+                        <th class="text-right">จำนวน</th>
+                        <th class="text-right">รวม</th>
+                        <th class="text-right">ลบ</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    <tr>
+                        <td colspan="6" class="empty-message">ยังไม่มีรายการสินค้า</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="total-section" id="totalSection" style="display: none;">
+                <div class="total-row">
+                    <span>ยอดรวมทั้งหมด:</span>
+                    <span id="totalAmount">0.00 บาท</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-success" id="generateBtn" onclick="generateInvoice()" style="display: none;">
+                สร้างใบเสร็จรับเงิน
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let items = [];
+        let selectedItems = [];
+        
+        // Load items from API
+        $(document).ready(function() {
+            $.get('/api/items', function(data) {
+                items = data;
+                initializeVirtualSelect();
+            });
+        });
+        
+        function initializeVirtualSelect() {
+            const options = items.map(item => ({
+                label: `${item.sku} - ${item.name} (${item.price.toFixed(2)} บาท)`,
+                value: item.sku,
+                description: `ราคา: ${item.price.toFixed(2)} บาท`
+            }));
+            
+            VirtualSelect.init({
+                ele: '#itemSelect',
+                options: options,
+                search: true,
+                placeholder: 'เลือกสินค้า...',
+                searchPlaceholderText: 'ค้นหาสินค้า...',
+                noOptionsText: 'ไม่พบสินค้า',
+                noSearchResultsText: 'ไม่พบผลลัพธ์',
+                selectAllText: 'เลือกทั้งหมด',
+                searchGroup: false,
+                maxWidth: '100%'
+            });
+        }
+        
+        function addItem() {
+            const selectedSku = document.querySelector('#itemSelect').value;
+            const quantity = parseInt($('#quantity').val());
+            
+            if (!selectedSku) {
+                alert('กรุณาเลือกสินค้า');
+                return;
+            }
+            
+            if (!quantity || quantity < 1) {
+                alert('กรุณากรอกจำนวนที่ถูกต้อง');
+                return;
+            }
+            
+            const item = items.find(i => i.sku === selectedSku);
+            if (!item) {
+                alert('ไม่พบสินค้า');
+                return;
+            }
+            
+            selectedItems.push({
+                sku: item.sku,
+                name: item.name,
+                price: item.price,
+                quantity: quantity
+            });
+            
+            updateItemsTable();
+            
+            // Reset form
+            document.querySelector('#itemSelect').reset();
+            $('#quantity').val(1);
+        }
+        
+        function removeItem(index) {
+            selectedItems.splice(index, 1);
+            updateItemsTable();
+        }
+        
+        function updateItemsTable() {
+            const tbody = $('#itemsBody');
+            tbody.empty();
+            
+            if (selectedItems.length === 0) {
+                tbody.append('<tr><td colspan="6" class="empty-message">ยังไม่มีรายการสินค้า</td></tr>');
+                $('#totalSection').hide();
+                $('#generateBtn').hide();
+                return;
+            }
+            
+            let total = 0;
+            
+            selectedItems.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                const row = `
+                    <tr>
+                        <td>${item.sku}</td>
+                        <td>${item.name}</td>
+                        <td class="text-right">${item.price.toFixed(2)}</td>
+                        <td class="text-right">${item.quantity}</td>
+                        <td class="text-right">${itemTotal.toFixed(2)}</td>
+                        <td class="text-right">
+                            <button class="btn btn-danger" onclick="removeItem(${index})">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            
+            $('#totalAmount').text(total.toFixed(2) + ' บาท');
+            $('#totalSection').show();
+            $('#generateBtn').show();
+        }
+        
+        function generateInvoice() {
+            if (selectedItems.length === 0) {
+                alert('กรุณาเพิ่มสินค้าก่อนสร้างใบเสร็จ');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/generate-invoice',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ items: selectedItems }),
+                success: function(html) {
+                    // Open invoice in new window
+                    const invoiceWindow = window.open('', '_blank');
+                    invoiceWindow.document.write(html);
+                    invoiceWindow.document.close();
+                },
+                error: function(error) {
+                    alert('เกิดข้อผิดพลาดในการสร้างใบเสร็จ');
+                    console.error(error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

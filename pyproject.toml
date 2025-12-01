@@ -1,0 +1,11 @@
+[project]
+name = "invoice-generator"
+version = "0.1.0"
+description = "Thai Invoice Generator - Web application for generating invoices in Thai (no VAT)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.12",
+    "jinja2==3.1.5",
+    "python-multipart==0.0.20",
+    "uvicorn==0.34.0",
+]

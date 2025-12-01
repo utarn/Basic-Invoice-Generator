@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเสร็จรับเงิน</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+            background: white;
+            padding: 0;
+        }
+        
+        .invoice-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 40px;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .invoice-info div {
+            font-size: 16px;
+            color: #555;
+        }
+        
+        .invoice-info strong {
+            color: #333;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .items-table th {
+            background: #333;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .items-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            font-size: 16px;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .total-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #333;
+            color: white;
+            border-radius: 5px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .print-button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">🖨️ พิมพ์ใบเสร็จ</button>
+    
+    <div class="invoice-container">
+        <div class="header">
+            <h1>ใบเสร็จรับเงิน</h1>
+            <h2>INVOICE</h2>
+        </div>
+        
+        <div class="invoice-info">
+            <div>
+                <strong>วันที่:</strong> {{ date }}
+            </div>
+            <div>
+                <strong>เลขที่ใบเสร็จ:</strong> INV-{{ date.replace('/', '').replace(' ', '-').replace(':', '') }}
+            </div>
+        </div>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;" class="text-center">#</th>
+                    <th style="width: 15%;">SKU</th>
+                    <th style="width: 40%;">ชื่อสินค้า</th>
+                    <th style="width: 13%;" class="text-right">ราคา/หน่วย</th>
+                    <th style="width: 12%;" class="text-center">จำนวน</th>
+                    <th style="width: 15%;" class="text-right">รวม (บาท)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center">{{ loop.index }}</td>
+                    <td>{{ item.sku }}</td>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.price) }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="total-section">
+            <div class="total-row">
+                <span>ยอดรวมทั้งหมด (Total):</span>
+                <span>{{ "%.2f"|format(total) }} บาท</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>ขอบคุณที่ใช้บริการ</p>
+            <p>Thank you for your business</p>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-focus for printing
+        window.onload = function() {
+            setTimeout(function() {
+                window.focus();
+            }, 100);
+        }
+    </script>
+</body>
+</html>
