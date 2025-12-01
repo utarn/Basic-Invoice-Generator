@@ -56,7 +56,7 @@
         .invoice-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding: 15px;
             background: #f9f9f9;
             border-radius: 5px;
@@ -69,6 +69,36 @@
         
         .invoice-info strong {
             color: #333;
+        }
+        
+        .customer-info {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .customer-info h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        
+        .customer-details {
+            line-height: 1.8;
+        }
+        
+        .customer-row {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .customer-row strong {
+            display: inline-block;
+            min-width: 180px;
+            color: #555;
         }
         
         .items-table {
@@ -167,6 +197,23 @@
             </div>
             <div>
                 <strong>เลขที่ใบเสร็จ:</strong> INV-{{ date.replace('/', '').replace(' ', '-').replace(':', '') }}
+            </div>
+        </div>
+        
+        <div class="customer-info">
+            <h3 style="margin-bottom: 10px; color: #333;">ข้อมูลผู้ซื้อ</h3>
+            <div class="customer-details">
+                <div class="customer-row">
+                    <strong>ชื่อ:</strong> {{ customer.name }}
+                </div>
+                <div class="customer-row">
+                    <strong>ที่อยู่:</strong> {{ customer.address }}
+                </div>
+                {% if customer.tax_id %}
+                <div class="customer-row">
+                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> {{ customer.tax_id }}
+                </div>
+                {% endif %}
             </div>
         </div>
         

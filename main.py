@@ -47,8 +47,36 @@ def load_items():
     
     return items
 
-# Global items cache
+# Load customers from CSV
+def load_customers():
+    customers = []
+    csv_path = Path("customer.csv")
+    
+    if not csv_path.exists():
+        return customers
+    
+    with open(csv_path, 'r', encoding='utf-8') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            try:
+                name = row.get('Name', '').strip()
+                address = row.get('Address', '').strip()
+                tax_id = row.get('Tax ID', '').strip()
+                
+                if name:
+                    customers.append({
+                        'name': name,
+                        'address': address,
+                        'tax_id': tax_id
+                    })
+            except Exception as e:
+                continue
+    
+    return customers
+
+# Global caches
 ITEMS_CACHE = load_items()
+CUSTOMERS_CACHE = load_customers()
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -58,10 +86,15 @@ async def index(request: Request):
 async def get_items():
     return JSONResponse(content=ITEMS_CACHE)
 
+@app.get("/api/customers")
+async def get_customers():
+    return JSONResponse(content=CUSTOMERS_CACHE)
+
 @app.post("/api/generate-invoice")
 async def generate_invoice(request: Request):
     data = await request.json()
     invoice_items = data.get('items', [])
+    customer_info = data.get('customer', {})
     
     # Calculate totals
     total = sum(item['price'] * item['quantity'] for item in invoice_items)
@@ -73,6 +106,7 @@ async def generate_invoice(request: Request):
             "request": request,
             "items": invoice_items,
             "total": total,
+            "customer": customer_info,
             "date": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
     )
