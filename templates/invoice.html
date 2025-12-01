@@ -196,7 +196,7 @@
                 <strong>วันที่:</strong> {{ date }}
             </div>
             <div>
-                <strong>เลขที่ใบเสร็จ:</strong> INV-{{ date.replace('/', '').replace(' ', '-').replace(':', '') }}
+                <strong>เลขที่ใบเสร็จ:</strong> INV-{{ date.replace('/', '') }}-{{ range(1000, 9999) | random }}
             </div>
         </div>
         

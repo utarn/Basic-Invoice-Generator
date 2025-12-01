@@ -107,7 +107,7 @@ async def generate_invoice(request: Request):
             "items": invoice_items,
             "total": total,
             "customer": customer_info,
-            "date": datetime.now().strftime("%d/%m/%Y %H:%M")
+            "date": datetime.now().strftime("%d/%m/%Y")
         }
     )
     
