@@ -180,3 +180,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Database
+*.db
+invoices.db

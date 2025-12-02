@@ -245,53 +245,53 @@
             <h2>INVOICE</h2>
         </div>
         
-        {% if seller and seller.shop_name %}
+        
         <div class="customer-info" style="background: #fff3cd; border-left: 3px solid #ffc107;">
             <h3 style="margin-bottom: 5px; color: #856404;">ข้อมูลผู้ขาย</h3>
             <div class="customer-details">
                 <div class="customer-row">
-                    <strong>ชื่อร้าน:</strong> {{ seller.shop_name }}
+                    <strong>ชื่อร้าน:</strong> ร้านโอเคบุ๊ค
                 </div>
                 <div class="customer-row">
-                    <strong>ที่อยู่:</strong> {{ seller.shop_address }}
+                    <strong>ที่อยู่:</strong> ที่อยู่ร้าน
                 </div>
                 <div class="customer-row">
-                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> {{ seller.tax_id }}
+                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> 0000000000000
                 </div>
                 <div class="customer-row">
-                    <strong>โทรศัพท์:</strong> {{ seller.phone }}
+                    <strong>โทรศัพท์:</strong> 000-000-0000
                 </div>
             </div>
         </div>
-        {% endif %}
+        
         
         <div class="invoice-info">
             <div>
-                <strong>วันที่:</strong> {{ date }}
+                <strong>วันที่:</strong> 02/12/2025
             </div>
             <div>
-                <strong>เลขที่ใบเสร็จ:</strong> {{ invoice_number }}
+                <strong>เลขที่ใบเสร็จ:</strong> 005/2568
             </div>
         </div>
         
-        {% if customer and customer.name %}
+        
         <div class="customer-info">
             <h3 style="margin-bottom: 5px; color: #333;">ข้อมูลผู้ซื้อ</h3>
             <div class="customer-details">
                 <div class="customer-row">
-                    <strong>ชื่อ:</strong> {{ customer.name }}
+                    <strong>ชื่อ:</strong> บริษัท ตัวอย่าง จำกัด
                 </div>
                 <div class="customer-row">
-                    <strong>ที่อยู่:</strong> {{ customer.address }}
+                    <strong>ที่อยู่:</strong> 123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110
                 </div>
-                {% if customer.tax_id %}
+                
                 <div class="customer-row">
-                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> {{ customer.tax_id }}
+                    <strong>เลขประจำตัวผู้เสียภาษี:</strong> 0123456789012
                 </div>
-                {% endif %}
+                
             </div>
         </div>
-        {% endif %}
+        
         
         <table class="items-table">
             <thead>
@@ -305,23 +305,32 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in items %}
+                
                 <tr>
-                    <td class="text-center">{{ loop.index }}</td>
-                    <td>{{ item.sku }}</td>
-                    <td>{{ item.name }}</td>
-                    <td class="text-right">{{ "%.2f"|format(item.price) }}</td>
-                    <td class="text-center">{{ item.quantity }}</td>
-                    <td class="text-right">{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                    <td class="text-center">1</td>
+                    <td>11520</td>
+                    <td>000สายรุ้งปีใหม่ 30 บาท(6แถม1)</td>
+                    <td class="text-right">180.00</td>
+                    <td class="text-center">1</td>
+                    <td class="text-right">180.00</td>
                 </tr>
-                {% endfor %}
+                
+                <tr>
+                    <td class="text-center">2</td>
+                    <td>10642</td>
+                    <td>010 บาท</td>
+                    <td class="text-right">10.00</td>
+                    <td class="text-center">1</td>
+                    <td class="text-right">10.00</td>
+                </tr>
+                
             </tbody>
         </table>
         
         <div class="total-section">
             <div class="total-row">
                 <span>ยอดรวมทั้งหมด (Total):</span>
-                <span>{{ "%.2f"|format(total) }} บาท</span>
+                <span>190.00 บาท</span>
             </div>
         </div>
         
@@ -329,13 +338,13 @@
             <div class="signature-box">
                 <div class="signature-label">ผู้ซื้อ (Buyer)</div>
                 <div class="signature-line">
-                    {{ customer.name if customer and customer.name else '.................................' }}
+                    บริษัท ตัวอย่าง จำกัด
                 </div>
             </div>
             <div class="signature-box">
                 <div class="signature-label">เจ้าของร้าน (Shop Owner)</div>
                 <div class="signature-line">
-                    {{ seller.shop_name if seller and seller.shop_name else '.................................' }}
+                    ร้านโอเคบุ๊ค
                 </div>
             </div>
         </div>

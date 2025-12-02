@@ -7,7 +7,10 @@
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- VirtualSelect CSS and JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.40/dist/virtual-select.min.css">
     <script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.40/dist/virtual-select.min.js"></script>
@@ -170,12 +173,65 @@
         #itemSelect {
             width: 100%;
         }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .tab-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .tab-content {
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .view-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .view-btn:hover {
+            background: #138496;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>ระบบสร้างใบเสร็จรับเงิน</h1>
         
+        <!-- Tab Navigation -->
+        <div style="margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 2px solid #ddd; padding-bottom: 10px;">
+            <button class="tab-btn active" onclick="switchTab('invoice')">สร้างใบเสร็จ</button>
+            <button class="tab-btn" onclick="switchTab('seller')">ข้อมูลผู้ขาย</button>
+            <button class="tab-btn" onclick="switchTab('items')">จัดการสินค้า</button>
+            <button class="tab-btn" onclick="switchTab('history')">ค้นหาใบเสร็จ</button>
+        </div>
+        
+        <!-- Invoice Tab -->
+        <div id="invoiceTab" class="tab-content">
         <div class="form-section">
             <h2 style="margin-bottom: 15px; font-size: 20px; color: #333;">ข้อมูลผู้ซื้อ</h2>
             
@@ -247,12 +303,114 @@
                 สร้างใบเสร็จรับเงิน
             </button>
         </div>
+        </div>
+        
+        <!-- Seller Info Tab -->
+        <div id="sellerTab" class="tab-content" style="display: none;">
+            <div class="form-section">
+                <h2 style="margin-bottom: 15px; font-size: 20px; color: #333;">ข้อมูลผู้ขาย / ร้านค้า</h2>
+                
+                <div class="form-group">
+                    <label for="shopName">ชื่อร้าน *</label>
+                    <input type="text" id="shopName" placeholder="กรอกชื่อร้าน" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shopAddress">ที่อยู่ร้าน *</label>
+                    <input type="text" id="shopAddress" placeholder="กรอกที่อยู่ร้าน" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shopTaxId">หมายเลขประจำตัวผู้เสียภาษี *</label>
+                    <input type="text" id="shopTaxId" placeholder="กรอกหมายเลข 13 หลัก" maxlength="13" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shopPhone">เบอร์โทรศัพท์ *</label>
+                    <input type="text" id="shopPhone" placeholder="กรอกเบอร์โทรศัพท์" required>
+                </div>
+                
+                <button class="btn btn-success" onclick="saveSellerInfo()">
+                    บันทึกข้อมูลผู้ขาย
+                </button>
+            </div>
+        </div>
+        
+        <!-- Items Management Tab -->
+        <div id="itemsTab" class="tab-content" style="display: none;">
+            <div class="form-section">
+                <h2 style="margin-bottom: 15px; font-size: 20px; color: #333;">จัดการข้อมูลสินค้า</h2>
+                
+                <div style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <p style="margin-bottom: 10px;"><strong>จำนวนสินค้าในระบบ:</strong> <span id="itemsCount">กำลังโหลด...</span> รายการ</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="csvFile">อัปโหลดไฟล์ export_items.csv</label>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                        หมายเหตุ: การอัปโหลดไฟล์ใหม่จะลบข้อมูลสินค้าเดิมทั้งหมดและนำเข้าจากไฟล์ใหม่
+                    </p>
+                    <input type="file" id="csvFile" accept=".csv" style="padding: 10px; border: 2px dashed #ddd; border-radius: 5px; width: 100%; cursor: pointer;">
+                </div>
+                
+                <button class="btn btn-primary" onclick="uploadItemsCSV()" style="margin-top: 10px;">
+                    <span id="uploadBtnText">อัปโหลดและนำเข้าสินค้า</span>
+                </button>
+                
+                <div id="uploadProgress" style="display: none; margin-top: 15px;">
+                    <p style="color: #007bff;">กำลังประมวลผล...</p>
+                </div>
+            </div>
+            
+            <div class="form-section" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 15px; font-size: 18px; color: #333;">รูปแบบไฟล์ CSV</h3>
+                <p style="font-size: 14px; color: #666;">ไฟล์ CSV ต้องมี column ดังนี้:</p>
+                <ul style="font-size: 14px; color: #666; margin-left: 20px; margin-top: 10px;">
+                    <li><strong>SKU</strong> - รหัสสินค้า</li>
+                    <li><strong>Name</strong> - ชื่อสินค้า</li>
+                    <li><strong>Price [okbooks]</strong> - ราคาสินค้า</li>
+                    <li><strong>Category</strong> (optional) - หมวดหมู่สินค้า</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- History Tab -->
+        <div id="historyTab" class="tab-content" style="display: none;">
+            <div class="form-section">
+                <h2 style="margin-bottom: 15px; font-size: 20px; color: #333;">ค้นหาใบเสร็จ</h2>
+                
+                <div class="form-group">
+                    <label for="searchQuery">ค้นหาด้วยเลขที่ใบเสร็จ, ชื่อลูกค้า หรือวันที่</label>
+                    <input type="text" id="searchQuery" placeholder="กรอกคำค้นหา..." onkeyup="searchInvoices()">
+                </div>
+                
+                <div id="searchResults">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>เลขที่ใบเสร็จ</th>
+                                <th>วันที่</th>
+                                <th>ชื่อลูกค้า</th>
+                                <th class="text-right">ยอดรวม</th>
+                                <th class="text-center">ดูใบเสร็จ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchResultsBody">
+                            <tr>
+                                <td colspan="5" class="empty-message">กรอกคำค้นหาเพื่อค้นหาใบเสร็จ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script>
         let items = [];
         let customers = [];
         let selectedItems = [];
+        let sellerInfo = null;
         
         // Load data from API
         $(document).ready(function() {
@@ -267,7 +425,264 @@
                 customers = data;
                 initializeCustomerSelect();
             });
+            
+            // Load seller info
+            loadSellerInfo();
         });
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tabName === 'invoice') {
+                document.getElementById('invoiceTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (tabName === 'seller') {
+                document.getElementById('sellerTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            } else if (tabName === 'items') {
+                document.getElementById('itemsTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                loadItemsCount();
+            } else if (tabName === 'history') {
+                document.getElementById('historyTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[3].classList.add('active');
+                searchInvoices(); // Auto-load recent invoices
+            }
+        }
+        
+        // Items Management Functions
+        function loadItemsCount() {
+            $.get('/api/items/count', function(data) {
+                $('#itemsCount').text(data.count);
+            }).fail(function() {
+                $('#itemsCount').text('ไม่สามารถโหลดข้อมูลได้');
+            });
+        }
+        
+        function uploadItemsCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาเลือกไฟล์',
+                    text: 'โปรดเลือกไฟล์ CSV ก่อนอัปโหลด',
+                    confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+            
+            if (!file.name.endsWith('.csv')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ไฟล์ไม่ถูกต้อง',
+                    text: 'กรุณาเลือกไฟล์ CSV เท่านั้น',
+                    confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+            
+            // Confirm before upload
+            Swal.fire({
+                icon: 'warning',
+                title: 'ยืนยันการอัปโหลด?',
+                text: 'ข้อมูลสินค้าเดิมทั้งหมดจะถูกลบและแทนที่ด้วยข้อมูลจากไฟล์ใหม่',
+                showCancelButton: true,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performUpload(file);
+                }
+            });
+        }
+        
+        function performUpload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show progress
+            $('#uploadProgress').show();
+            $('#uploadBtnText').text('กำลังอัปโหลด...');
+            
+            $.ajax({
+                url: '/api/items/upload',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    $('#uploadProgress').hide();
+                    $('#uploadBtnText').text('อัปโหลดและนำเข้าสินค้า');
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ',
+                        text: data.message,
+                        confirmButtonText: 'ตกลง'
+                    });
+                    
+                    // Reload items count
+                    loadItemsCount();
+                    
+                    // Reload items for the dropdown
+                    $.get('/api/items', function(data) {
+                        items = data;
+                        // Re-initialize item select with new data
+                        const itemSelectEl = document.querySelector('#itemSelect');
+                        if (itemSelectEl) {
+                            itemSelectEl.destroy();
+                        }
+                        initializeItemSelect();
+                    });
+                    
+                    // Clear file input
+                    document.getElementById('csvFile').value = '';
+                },
+                error: function(xhr) {
+                    $('#uploadProgress').hide();
+                    $('#uploadBtnText').text('อัปโหลดและนำเข้าสินค้า');
+                    
+                    let errorMsg = 'เกิดข้อผิดพลาดในการอัปโหลด';
+                    if (xhr.responseJSON && xhr.responseJSON.detail) {
+                        errorMsg = xhr.responseJSON.detail;
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: errorMsg,
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            });
+        }
+        
+        // Seller Info Functions
+        function loadSellerInfo() {
+            $.get('/api/seller', function(data) {
+                sellerInfo = data;
+                $('#shopName').val(data.shop_name);
+                $('#shopAddress').val(data.shop_address);
+                $('#shopTaxId').val(data.tax_id);
+                $('#shopPhone').val(data.phone);
+            });
+        }
+        
+        function saveSellerInfo() {
+            const shopName = $('#shopName').val().trim();
+            const shopAddress = $('#shopAddress').val().trim();
+            const shopTaxId = $('#shopTaxId').val().trim();
+            const shopPhone = $('#shopPhone').val().trim();
+            
+            if (!shopName || !shopAddress || !shopTaxId || !shopPhone) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ข้อมูลไม่ครบถ้วน',
+                    text: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+                    confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/seller/1',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    shop_name: shopName,
+                    shop_address: shopAddress,
+                    tax_id: shopTaxId,
+                    phone: shopPhone
+                }),
+                success: function(data) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ',
+                        text: 'บันทึกข้อมูลผู้ขายสำเร็จ',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    sellerInfo = data;
+                },
+                error: function(error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
+                        confirmButtonText: 'ตกลง'
+                    });
+                    console.error(error);
+                }
+            });
+        }
+        
+        // Search Invoices
+        function searchInvoices() {
+            const query = $('#searchQuery').val().trim();
+            
+            $.get('/api/invoices/search', { query: query }, function(data) {
+                displaySearchResults(data);
+            });
+        }
+        
+        function displaySearchResults(invoices) {
+            const tbody = $('#searchResultsBody');
+            tbody.empty();
+            
+            if (invoices.length === 0) {
+                tbody.append('<tr><td colspan="5" class="empty-message">ไม่พบใบเสร็จ</td></tr>');
+                return;
+            }
+            
+            invoices.forEach(invoice => {
+                const row = `
+                    <tr>
+                        <td>${invoice.invoice_number}</td>
+                        <td>${invoice.invoice_date}</td>
+                        <td>${invoice.customer_name}</td>
+                        <td class="text-right">${invoice.total_amount.toFixed(2)} บาท</td>
+                        <td class="text-center">
+                            <button class="view-btn" onclick="viewInvoice('${invoice.invoice_number}')">
+                                ดูใบเสร็จ
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+        
+        function viewInvoice(invoiceNumber) {
+            // Split invoice number into number and year parts
+            // Format: "005/2568"
+            const parts = invoiceNumber.split('/');
+            if (parts.length === 2) {
+                const number = parts[0];
+                const year = parts[1];
+                const url = `/api/invoices/view?number=${number}&year=${year}`;
+                window.open(url, '_blank');
+            } else {
+                console.error('Invalid invoice number format:', invoiceNumber);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'รูปแบบเลขที่ใบเสร็จไม่ถูกต้อง',
+                    confirmButtonText: 'ตกลง'
+                });
+            }
+        }
         
         function initializeItemSelect() {
             const options = items.map(item => ({
@@ -336,18 +751,33 @@
             const quantity = parseInt($('#quantity').val());
             
             if (!selectedSku) {
-                alert('กรุณาเลือกสินค้า');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาเลือกสินค้า',
+                    text: 'โปรดเลือกสินค้าจากรายการ',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
-            
+
             if (!quantity || quantity < 1) {
-                alert('กรุณากรอกจำนวนที่ถูกต้อง');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'จำนวนไม่ถูกต้อง',
+                    text: 'กรุณากรอกจำนวนที่ถูกต้อง',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
-            
+
             const item = items.find(i => i.sku === selectedSku);
             if (!item) {
-                alert('ไม่พบสินค้า');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ไม่พบสินค้า',
+                    text: 'ไม่พบสินค้าที่เลือก',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
             
@@ -409,25 +839,42 @@
         
         function generateInvoice() {
             if (selectedItems.length === 0) {
-                alert('กรุณาเพิ่มสินค้าก่อนสร้างใบเสร็จ');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ไม่มีรายการสินค้า',
+                    text: 'กรุณาเพิ่มสินค้าก่อนสร้างใบเสร็จ',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
-            
+
             // Get customer information
             const customerName = $('#customerName').val().trim();
             const customerAddress = $('#customerAddress').val().trim();
             const customerTaxId = $('#customerTaxId').val().trim();
-            
+
             // Validate required fields
             if (!customerName) {
-                alert('กรุณากรอกชื่อผู้ซื้อ');
-                $('#customerName').focus();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณากรอกชื่อผู้ซื้อ',
+                    text: 'โปรดระบุชื่อผู้ซื้อก่อนสร้างใบเสร็จ',
+                    confirmButtonText: 'ตกลง'
+                }).then(() => {
+                    $('#customerName').focus();
+                });
                 return;
             }
-            
+
             if (!customerAddress) {
-                alert('กรุณากรอกที่อยู่ผู้ซื้อ');
-                $('#customerAddress').focus();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณากรอกที่อยู่ผู้ซื้อ',
+                    text: 'โปรดระบุที่อยู่ผู้ซื้อก่อนสร้างใบเสร็จ',
+                    confirmButtonText: 'ตกลง'
+                }).then(() => {
+                    $('#customerAddress').focus();
+                });
                 return;
             }
             
@@ -452,7 +899,12 @@
                     invoiceWindow.document.close();
                 },
                 error: function(error) {
-                    alert('เกิดข้อผิดพลาดในการสร้างใบเสร็จ');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'เกิดข้อผิดพลาดในการสร้างใบเสร็จ',
+                        confirmButtonText: 'ตกลง'
+                    });
                     console.error(error);
                 }
             });
