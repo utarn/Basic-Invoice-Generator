@@ -1,0 +1,31 @@
+services:
+  invoice-generator:
+    build: .
+    ports:
+      - "5010:8000"
+    volumes:
+      # Mount data directory for persistent storage
+      - ./data:/app/data
+      # Mount database directory for persistent storage
+      - ./database:/app/database
+      # Mount CSV files for easy updates
+      - ./customer.csv:/app/customer.csv
+    environment:
+      - PORT=8000
+      - PYTHONPATH=/app
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY:-auto-generated-key-change-in-production}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - invoice-network
+
+networks:
+  invoice-network:
+    driver: bridge
+

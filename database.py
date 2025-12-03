@@ -4,11 +4,15 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 import json
 
-DATABASE_PATH = "invoices.db"
+DATABASE_PATH = "database/invoices.db"
 
 
 def get_db_connection():
     """สร้างการเชื่อมต่อกับฐานข้อมูล"""
+    # Ensure database file exists and is writable
+    if not Path(DATABASE_PATH).exists():
+        Path(DATABASE_PATH).touch()
+
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn

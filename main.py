@@ -1,16 +1,58 @@
-from fastapi import FastAPI, Request, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form, Depends
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware import Middleware
 from pydantic import BaseModel
 import csv
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional
 import os
+import hashlib
+import hmac
 import database as db
 
-app = FastAPI()
+# Authentication configuration
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    raise ValueError("ADMIN_PASSWORD environment variable is required")
+
+SECRET_KEY = os.environ.get("SECRET_KEY", os.urandom(32).hex())
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Skip authentication for login page and static files
+        if request.url.path in ["/login", "/static/"] or request.url.path.startswith("/static/"):
+            return await call_next(request)
+
+        # Check for auth cookie
+        auth_token = request.cookies.get("invoice_auth")
+        if auth_token and self.verify_token(auth_token):
+            return await call_next(request)
+
+        # Redirect to login for protected routes
+        if request.url.path == "/":
+            return RedirectResponse(url="/login", status_code=302)
+
+        # For API routes, return 401
+        if request.url.path.startswith("/api/"):
+            raise HTTPException(status_code=401, detail="Authentication required")
+
+        return RedirectResponse(url="/login", status_code=302)
+
+    def verify_token(self, token: str) -> bool:
+        try:
+            expected_token = hmac.new(SECRET_KEY.encode(), ADMIN_PASSWORD.encode(), hashlib.sha256).hexdigest()
+            return hmac.compare_digest(token, expected_token)
+        except:
+            return False
+
+app = FastAPI(middleware=[Middleware(AuthMiddleware)])
+
+def create_auth_token() -> str:
+    return hmac.new(SECRET_KEY.encode(), ADMIN_PASSWORD.encode(), hashlib.sha256).hexdigest()
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -25,7 +67,7 @@ def load_items():
     
     # If database is empty, try to import from CSV file
     if len(items) == 0:
-        csv_path = Path("export_items.csv")
+        csv_path = Path("database/export_items.csv")
         if csv_path.exists():
             with open(csv_path, 'r', encoding='utf-8') as file:
                 csv_content = file.read()
@@ -76,6 +118,35 @@ class InvoiceCreate(BaseModel):
 # Global caches
 ITEMS_CACHE = load_items()
 CUSTOMERS_CACHE = load_customers()
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login")
+async def login(request: Request, password: str = Form(...)):
+    if password == ADMIN_PASSWORD:
+        response = RedirectResponse(url="/", status_code=302)
+        auth_token = create_auth_token()
+        response.set_cookie(
+            key="invoice_auth",
+            value=auth_token,
+            httponly=True,
+            secure=False,  # Set to True in production with HTTPS
+            samesite="lax"
+        )
+        return response
+    else:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Invalid password"
+        })
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie(key="invoice_auth")
+    return response
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
